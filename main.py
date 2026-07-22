@@ -52,13 +52,13 @@ def main():
     #vuosi = int(input("Vuosi:"))
     #kuukausi = int(input("Kuukausi:"))
     #päivä = int(input("Päivä:"))
-    datetimes = datetime(year=2026,month=6,day=1,hour=1,minute=1,second=1,tzinfo=ZoneInfo("Europe/Helsinki")).isoformat()
+    datetimes = datetime(year=2026,month=1,day=1,hour=1,minute=1,second=1,tzinfo=ZoneInfo("Europe/Helsinki")).isoformat()
     
     events_result = ( 
         service.events()
         .list(
             timeMin=datetimes,
-            calendarId="primary",
+            calendarId="af5536734ac5ccb5773bd55eb1e26558333b0dded034b209b51976ad69113ae6@group.calendar.google.com",
             singleEvents=True,
             orderBy="startTime",
         )
@@ -72,6 +72,7 @@ def main():
    
     
     for event in events:
+      print(event["summary"])
       start = event["start"].get("dateTime", event["start"].get("date"))
       end = event["end"].get("dateTime", event["end"].get("date"))
       event_id = event.get("id")
