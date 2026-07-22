@@ -7,39 +7,81 @@ def init_db():
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS työt (
-            työid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            event_id TEXT NOT NULL PRIMARY KEY,
             talku TEXT NOT NULL,
             tloppu TEXT NOT NULL,
-            vpäivä VARCHAR(16),
-            tuntipalkka INTEGER,
-            UNIQUE(talku,tloppu)
+            tnimi TEXT NOT NULL
+  
             )
-    ''')  
+    ''') 
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS työpaikat (
+        nimi TEXT PRIMARY KEY,
+        FOREIGN KEY(nimi) REFERENCES työt (tnimi)
+        )      
+    ''')
     conn.commit()
     conn.close()
 
 
-def lisää_työpäivä(alku,loppu,viikon_päivä,tunti_palkka):
+def lisää_työpäivä(id,alku,loppu,summary):
     try:
         conn = sqlite3.connect("data/calendar.db")
         cursor = conn.cursor()
         cursor.execute(
-        """INSERT INTO työt (
+        """INSERT OR IGNORE INTO työt (
+            event_id,
             talku,
             tloppu,
-            vpäivä,
-            tuntipalkka
+            tnimi
             )
         VALUES (?,?,?,?)
         """,
-        (alku,loppu,viikon_päivä,tunti_palkka))
+        (id,alku,loppu,summary))
         
         conn.commit()
     except sqlite3.Error as e:
-        print(f"{e} error occured")
+        print(f"{e} error occured lisää työpäivä")
     finally:
         conn.close()
-def näytä_kaikki():
+
+def lisää_työpaikka(nimi):
+    conn = sqlite3.connect("data/calendar.db")
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+    INSERT OR IGNORE INTO työpaikat(
+    nimi
+    )
+    VALUES (?)
+    """,(nimi,))
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"{e} ocurred lisää_työpaikka")
+    finally:
+        conn.close()
+
+def hae_työpaikka(nimi):
+    conn = sqlite3.connect("data/calendar.db")
+    cursor = conn.cursor()
+    try:
+        cursor.execute(""" 
+    SELECT 1
+    FROM työpaikat
+    WHERE nimi = ?
+
+    """,(nimi,))
+    
+        if cursor.fetchone() is not None:
+            return True
+        else:
+            return False
+    except (sqlite3.Error,ValueError) as e:
+        print(f"{e} ocurred hae_työpaikka")
+    finally:
+        conn.close()
+
+def hae_työt():
     conn = sqlite3.connect("data/calendar.db")
     cursor = conn.cursor()
     cursor.execute("""
@@ -52,5 +94,3 @@ def näytä_kaikki():
     conn.close()
     return data
 init_db()
-lisää_työpäivä("2026-10-30 10:10:10","2026-10-30 12:12:12","Lauantai",10)
-print(näytä_kaikki())

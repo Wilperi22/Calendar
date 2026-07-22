@@ -7,12 +7,23 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.errors import HttpError
 
+import data
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/calendar.events.readonly"]
 
 
 def main():
-
+  values =set()
+  values.add("TYÖT")
+  weekdays = {
+    0:"Monday",
+    1:"Tuesday",
+    2:"Wensday",
+    3:"Thursday",
+    4:"Friday",
+    5:"Saturday",
+    6:"Sunday"
+  }
   tunnit = []
   päivä = {}
   creds = None
@@ -38,10 +49,12 @@ def main():
     service = build("calendar", "v3", credentials=creds)
 
     # Call the Calendar API
-   
-    datetimes = datetime(year=2026,month=10,day=5,hour=1,minute=1,second=0,tzinfo=ZoneInfo("Europe/Helsinki")).isoformat()
+    #vuosi = int(input("Vuosi:"))
+    #kuukausi = int(input("Kuukausi:"))
+    #päivä = int(input("Päivä:"))
+    datetimes = datetime(year=2026,month=6,day=1,hour=1,minute=1,second=1,tzinfo=ZoneInfo("Europe/Helsinki")).isoformat()
     
-    events_result = (
+    events_result = ( 
         service.events()
         .list(
             timeMin=datetimes,
@@ -56,29 +69,27 @@ def main():
     if not events:
       print("No upcoming events found.")
       return
-
-    # Prints the start and name of the next 10 events
+   
+    
     for event in events:
       start = event["start"].get("dateTime", event["start"].get("date"))
       end = event["end"].get("dateTime", event["end"].get("date"))
-      #id = event["id"].get("int"),event["id"].get("int")
-      #print(id)
+      event_id = event.get("id")
+      summary = event["summary"]
       
       dt_start = datetime.fromisoformat(start)
       dt_end = datetime.fromisoformat(end)
-
-      päivä[dt_start.strftime("%Y-%m-%d %H:%M:%S")] = dt_end.strftime("%Y-%m-%d %H:%M:%S")
-
-      tunnit_lasku =dt_end-dt_start
-      tunnit.append(tunnit_lasku.total_seconds()/3600)
-
-    palkka = []
-    tuntipalkka = 10
-    for v in tunnit:
-      palkka.append(f"{v*tuntipalkka}")
-    print(palkka,"palkka")
-    print(päivä ,"Päivät")
-    print(tunnit,"Tunnit")
+      
+      päivä[dt_start.strftime("%Y-%m-%d %H:%M:%S")] = dt_end.strftime("%Y-%m-%d %H:%M:%S") #Tekee dict missä on "Päivän alku":"Päivän loppu" esim "2026-07-09 08:30:00:2026-07-09 17:00:00"
+      if len(summary) == 3:
+        data.lisää_työpaikka(summary)
+      
+      
+      
+      
+      if data.hae_työpaikka(summary) == True:
+        data.lisää_työpäivä(event_id,dt_start,dt_end,summary)
+      
 
   except HttpError as error:
     print(f"An error occurred: {error}")
@@ -86,3 +97,4 @@ def main():
 
 if __name__ == "__main__":
   main()
+  print(data.hae_työt())
