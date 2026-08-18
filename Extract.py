@@ -64,7 +64,7 @@ def raw_events():
 
     #date_str = input("Start date (YYYY-MM-DD): ")
     #datetimes = datetime.strptime(date_str, "%Y-%m-%d").date().isoformat()
-    datetimes = datetime(year=2026,month=6,day=1,hour=0,minute=0,tzinfo=ZoneInfo("Europe/Helsinki")).isoformat()
+    datetimes = datetime(year=2025,month=6,day=1,hour=0,minute=0,tzinfo=ZoneInfo("Europe/Helsinki")).isoformat()
    
 
     events_result = ( 
@@ -106,4 +106,4 @@ def raw_events():
 
   except HttpError as error:
     print(f"An error occurred: {error}")
-raw_events()
+#raw_events()

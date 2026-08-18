@@ -2,7 +2,7 @@ import pandas as pd
 import data
 import Extract
 import Transform
-#import Load
+import Load
 import datetime
 from datetime import date
     
@@ -15,7 +15,9 @@ def main():
     
     työt = Transform.Transforming(df)
     palkat = Transform.kuukaudet(työt)
-    
+    #print(työt,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Tässä työt!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    #Transform.testi(työt)
+    Load.lisää_palkka(palkat)
 
 if __name__ == "__main__":
     main()

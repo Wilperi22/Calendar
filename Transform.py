@@ -1,5 +1,5 @@
 
-
+import holidays
 from datetime import datetime,date,time,timedelta
 import pandas as pd
 import Extract
@@ -12,6 +12,19 @@ LAUANTAI_LISÄ = 0.25
 SUNNUNTAI_LISÄ = 1
 YÖ_LISÄ = 0.3#22-07
 ILTA_LISÄ = 0.15 #18-22
+
+def testi(df):
+  print(pyhät())
+  print("Seuraavaksi df")
+  print(df,"Tässä testi df")
+  print("df jälkeen")
+  toukokuu = df[(df["start"] >= "2026-03-1")&
+              (df["end"] <("2026-04-1"))]
+  print("Ennen toukokuuta")
+  print(toukokuu)
+  print("Toukokuun jälkeen")
+  toukokuu_palkka = pd.DataFrame(laske_palkka(toukokuu).items(),columns=["Palkkalaji","Summa"])
+  print(toukokuu_palkka)
 
 def kuukaudet(df):
   
@@ -80,24 +93,37 @@ def poista_toteutumaton(df,alku:date,loppu:date):
 
   return toteutumaton
 
+def pyhät():
+  dr = pd.date_range(start="2026-01-01", end="2026-12-31")
+  
+# 1. Fetch holidays
+  fi_holidays = holidays.country_holidays("FI", years=2026)
+  pyhät_set = set(fi_holidays.keys())
+  return pyhät_set
+
+
 def laske_palkka(df):
+  pyhä_pvm = pyhät()
   peruspalkka = 0
   iltalisä = 0
   sunnuntailisä = 0
   lauantailisä = 0
   määrä = 0
+  arkipyhäkorvaus = 0
   vuosilomakorvaus = 0
-
+  #print(df)
   for row in df.itertuples():
-    
+    päivämäärä = row.start
     minuutit = row.minuutit + (row.tunnit*60)
     ilta_minuutit = row.ilta_min + (row.ilta_h*60)
     määrä += minuutit
-
-    if row.weekday == "Saturday":
+    
+    if päivämäärä.date() in pyhä_pvm:
+      arkipyhäkorvaus += minuutit * PALKKA_MIN * SUNNUNTAI_LISÄ
+    elif row.weekday == "Saturday":
       lauantailisä += minuutit * PALKKA_MIN * LAUANTAI_LISÄ
 
-    if row.weekday == "Sunday":
+    elif row.weekday == "Sunday":
       sunnuntailisä += minuutit * PALKKA_MIN * SUNNUNTAI_LISÄ
     
     iltalisä += ilta_minuutit * PALKKA_MIN * ILTA_LISÄ
@@ -109,19 +135,21 @@ def laske_palkka(df):
       + iltalisä
       + sunnuntailisä 
       + lauantailisä
+      + arkipyhäkorvaus
     )
 
   vuosilomakorvaus += yhteensä*0.115
   yhteensä += vuosilomakorvaus
   return {
-    "peruspalkka":round(peruspalkka,2),
-    "iltalisä":round(iltalisä,2),
-    "lauantailisä":round(lauantailisä,2),
-    "sunnuntailisä":round(sunnuntailisä,2),
+    "Peruspalkka":round(peruspalkka,2),
+    "Iltalisä":round(iltalisä,2),
+    "Lauantailisä":round(lauantailisä,2),
+    "Sunnuntailisä":round(sunnuntailisä,2),
+    "Arkipyhäkorvuas":round(arkipyhäkorvaus),
     "Vuosilomakorvaus":round(vuosilomakorvaus,2),
-    "yhteensä":round(yhteensä,2),
-    "tunnit":määrä//60,
-    "minuutit":määrä%60
+    "Yhteensä":round(yhteensä,2),
+    "Tunnit":määrä//60,
+    "Minuutit":määrä%60
   }
 
 def Transforming(df):
@@ -171,68 +199,14 @@ def Transforming(df):
     ## #df2.iloc["kuukausi"] = kuukausi
    # df2.loc[len(df2)] = palkka
  # df2["kuukausi"] = testi
-  
+  print("Transform loppu")
   return df
 
 
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#Poistetaan poissa olleet päivät
-  #saikku = sairaskorvaus_laskuri(june,alku,loppu)
-#print(saikku)
-  #june = poista_toteutumaton(june,alku,loppu)
-
-
-
-#print(heinä)
-  #kesä_palkka = pd.DataFrame(laske_palkka(june).items(),columns=["Palkkalaji","Summa"])
-  #heinä_palkka = #pd.DataFrame(laske_palkka(heinä).items(),columns=["Palkkalaji","Summa"])
-  #kesä_palkka.loc[kesä_palkka["Palkkalaji"] == "yhteensä", "Summa"] += saikku
-  #kesä_palkka.loc[len(kesä_palkka)] ={
-   ###}
-
-  #yhteensä,Sairaskorvaus = kesä_palkka.iloc[5].copy(),kesä_palkka.iloc[6].copy()
-
-  #kesä_palkka.iloc[5],kesä_palkka.iloc[6] = Sairaskorvaus,yhteensä
 
 
 
 ##TODO Arkipyhäkorvauksen lisääminen (EHKÄ)
-#TODO Vuosilomakorvaus lisääminen (EHKÄ)
+
 #TODO Siisti ohjelmaa. Luo kansioita tee koodista luettavampaa. (Myöhemmin)
 #TODO prefect implementoiti

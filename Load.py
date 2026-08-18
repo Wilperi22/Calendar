@@ -14,28 +14,30 @@ def lisää_palkka(df):
     df["vuosi"] = df.index.year
     df["kuukausi"] = df.index.month
     print(df)
-    for item in df.itertuples():
+    for row in df.itertuples():
+        print(row)
+        tyhjä = row
         
-        tyhjä = item[0]
-        
-        peruspalkka= item[1]
-        iltalisä =item[2]
-        lauantailisä =item[3]
-        sunnuntailisä =item[4]
-        Vuosilomakorvaus =item[5]
-        yhteensä =item[6]
-        tunnit=item[7]
-        minuutit=item[8]
-        vuosi= item[9]
-        kuukausi= item[10]
-        data.lisää_palkka(1,vuosi,kuukausi,peruspalkka,iltalisä,lauantailisä,sunnuntailisä,Vuosilomakorvaus,yhteensä,tunnit,minuutit)
+        peruspalkka= row.Peruspalkka
+        iltalisä =row.Iltalisä
+        lauantailisä =row.Lauantailisä
+        sunnuntailisä =row.Sunnuntailisä
+        arkippyhäkorvaus =row.Arkipyhäkorvuas
+        Vuosilomakorvaus = row.Vuosilomakorvaus
+        yhteensä =row.Yhteensä
+        tunnit=row.Tunnit
+        minuutit=row.Minuutit
+        vuosi= row.vuosi
+        kuukausi= row.kuukausi
+        data.lisää_palkka(1,vuosi,kuukausi,peruspalkka,iltalisä,lauantailisä,sunnuntailisä,arkippyhäkorvaus,Vuosilomakorvaus,yhteensä,tunnit,minuutit)
 
 def lisää_työt(df):
-    print(df)
+    for row in df.itertuples():
+        print(row.summary)
 
 events = Extract.raw_events()
 df = pd.DataFrame(events)    
 työt = Transform.Transforming(df)
 palkat = Transform.kuukaudet(työt)
 
-lisää_palkka(palkat)
+lisää_työt(työt)

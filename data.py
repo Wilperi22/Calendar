@@ -40,9 +40,13 @@ def init_db():
                 talku TIMESTAMPTZ NOT NULL,
                 tloppu TIMESTAMPTZ NOT NULL,
                 tnimi TEXT NOT NULL,
+                viikonpäivä TEXT,
+                ilta_h INT,
+                ilta_min INT,
                 henkilöid INT NOT NULL,
                 työid INT NOT NULL,
-  
+               
+
                 FOREIGN KEY (henkilöid)
                     REFERENCES työntekijä(henkilöid),
                 FOREIGN KEY (työid)
@@ -60,6 +64,7 @@ def init_db():
                 iltalisä REAL NOT NULL,
                 lauantailisä REAL NOT NULL,
                 sunnuntailisä REAL NOT NULL,
+                arkipyhäkorvaus REAL NOT NULL,
                 vuosilomakorvaus REAL NOT NULL,
                 yhteensä REAL NOT NULL,
                 tunnit INT NOT NULL,
@@ -102,9 +107,12 @@ def lisää_työpäivä(id,alku,loppu,summary):
                 event_id,
                 talku,
                 tloppu,
-                tnimi
+                tnimi,
+                viikonpäivä,
+                ilta_h,
+                ilta_min
                 )
-                VALUES (%s,%s,%s,%s)
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
                 ON CONFLICT (event_id) DO NOTHING
                 """,
                 (id,alku,loppu,summary))
@@ -152,7 +160,7 @@ def hae_työpaikka(nimi):
     except (psycopg.Error,ValueError) as e:
         print(f"{e} ocurred hae_työpaikka")
 
-def lisää_palkka(henkilöid,vuosi,kuukausi,peruspalkka,iltalisä,lauantailisä,sunnuntailisä,vuosilomakorvaus,yhteensä,tunnit,minuutit):
+def lisää_palkka(henkilöid,vuosi,kuukausi,peruspalkka,iltalisä,lauantailisä,sunnuntailisä,arkipyhäkorvaus,vuosilomakorvaus,yhteensä,tunnit,minuutit):
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute("""
@@ -164,14 +172,15 @@ def lisää_palkka(henkilöid,vuosi,kuukausi,peruspalkka,iltalisä,lauantailisä
                 iltalisä,
                 lauantailisä,
                 sunnuntailisä,
+                arkipyhäkorvaus,
                 vuosilomakorvaus,
                 yhteensä,
                 tunnit,
                 minuutit
                 )
-                VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 ON CONFLICT DO NOTHING
-                """,(henkilöid,vuosi,kuukausi,peruspalkka,iltalisä,lauantailisä,sunnuntailisä,vuosilomakorvaus,yhteensä,tunnit,minuutit))
+                """,(henkilöid,vuosi,kuukausi,peruspalkka,iltalisä,lauantailisä,sunnuntailisä,arkipyhäkorvaus,vuosilomakorvaus,yhteensä,tunnit,minuutit))
 def hae_työt():
 
     with get_connection() as conn:
