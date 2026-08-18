@@ -1,4 +1,3 @@
-#TODO Tee tästä Transform.py Joka muuttaa tiedon sellaiseksi jonka voi ladata databaseen
 
 
 from datetime import datetime,date,time,timedelta
@@ -14,7 +13,22 @@ SUNNUNTAI_LISÄ = 1
 YÖ_LISÄ = 0.3#22-07
 ILTA_LISÄ = 0.15 #18-22
 
-
+def kuukaudet(df):
+  
+  df = df.copy()
+  df["kuukausi"] = df["start"].dt.to_period("M")
+  df2 = pd.DataFrame()
+ 
+  for kuukausi,kuukausidf in df.groupby("kuukausi"):
+    
+    palkka = laske_palkka(kuukausidf)
+    if df2.empty:
+      df2 = pd.DataFrame(laske_palkka(kuukausidf),index=[kuukausi])
+      continue
+    
+    df2.loc[kuukausi] = palkka
+  
+  return df2
 
 def hrs_min(td):
   seconds = td.dt.total_seconds()
@@ -79,6 +93,7 @@ def laske_palkka(df):
     minuutit = row.minuutit + (row.tunnit*60)
     ilta_minuutit = row.ilta_min + (row.ilta_h*60)
     määrä += minuutit
+
     if row.weekday == "Saturday":
       lauantailisä += minuutit * PALKKA_MIN * LAUANTAI_LISÄ
 
@@ -95,7 +110,7 @@ def laske_palkka(df):
       + sunnuntailisä 
       + lauantailisä
     )
-  määrä = (f"{määrä//60}h",f"{määrä%60}min")
+
   vuosilomakorvaus += yhteensä*0.115
   yhteensä += vuosilomakorvaus
   return {
@@ -105,80 +120,119 @@ def laske_palkka(df):
     "sunnuntailisä":round(sunnuntailisä,2),
     "Vuosilomakorvaus":round(vuosilomakorvaus,2),
     "yhteensä":round(yhteensä,2),
-    "määrä h":määrä[0],
-    "määrä min":määrä[1]
+    "tunnit":määrä//60,
+    "minuutit":määrä%60
   }
-
 
 def Transforming(df):
   
-
-
   columns_remove =['kind', 'etag', 'status', 'htmlLink', 'created', 'updated', 'creator', 'organizer',  'iCalUID',
        'sequence', 'reminders', 'eventType', 'description', 'transparency',
-       'location']
-  df = df.drop(columns_remove,axis=1)
+       'location','colorId','eventLabelId']
+  #if 'colorId' in df.columns():
+    #df = df.drop('colorId',axis=1)
+  #if 'eventLabelId' in df.columns():
+    #df = df.drop('eventLabelId',axis=1,errors='ignore')
+  df = df.drop(columns_remove,axis=1,errors='ignore')
+
   df = df[df["summary"].str.len()<=3]
+  
   df["start"] = df["start"].str["dateTime"]
   df["end"] = df["end"].str["dateTime"]
-  print(df)
-  print(df.isna().any(axis=1))
+
+ 
+
   df["start"] = pd.to_datetime(df["start"], utc=True).dt.tz_convert("Europe/Helsinki")
   df["end"] = pd.to_datetime(df["end"], utc=True).dt.tz_convert("Europe/Helsinki")
   df["weekday"] = df["start"].apply(viikonpäivä)
 
   kesto = df["end"]-df["start"]
-
-#
+  
   df["tunnit"],df["minuutit"] = hrs_min(kesto)
 
 
   six_pm = df["end"].dt.normalize() + pd.Timedelta(hours=18)
-
+  
   ilta_alku = pd.concat([df["start"], six_pm], axis=1).max(axis=1)
 
 # Iltatyön kesto
   ilta_kesto = (df["end"] - ilta_alku).clip(lower=pd.Timedelta(0))
 
   df["ilta_h"], df["ilta_min"] = hrs_min(ilta_kesto)
+  #test_start = df["start"].iloc[0]
+  #df["kuukausi"] = df["start"].dt.to_period("M")
+  #df2 = pd.DataFrame()
+  #testi = []
+  #for kuukausi,kuukausidf in df.groupby("kuukausi"):
+   # testi.append(kuukausi)
+   # palkka = laske_palkka(kuukausidf)
+   # if df2.empty:
+   #   df2 = pd.DataFrame(laske_palkka(kuukausidf),index=[0])
+    ## #df2.iloc["kuukausi"] = kuukausi
+   # df2.loc[len(df2)] = palkka
+ # df2["kuukausi"] = testi
+  
+  return df
+
+
+  
 
 
 
-  june = df[(df["start"] >= "2026-06-01") &
-        (df["start"] < "2026-07-01")]
-  june = june.round(decimals=2)
 
-  may = df[(df["start"]>= "2026-05-01")&
-         (df["start"] < "2026-05-31")]
 
-  heinä = df[(df["start"] >= "2026-07-01") &
-        (df["start"] < "2026-08-01")]
-#TODO Alku ja loppu pitäisi olla kysely eikä kiinteä päivämäärä
-  alku = date(2026,6,3)
-  loppu = date(2026,6,6)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #Poistetaan poissa olleet päivät
-  saikku = sairaskorvaus_laskuri(june,alku,loppu)
+  #saikku = sairaskorvaus_laskuri(june,alku,loppu)
 #print(saikku)
-  june = poista_toteutumaton(june,alku,loppu)
+  #june = poista_toteutumaton(june,alku,loppu)
 
 
 
 #print(heinä)
-  kesä_palkka = pd.DataFrame(laske_palkka(june).items(),columns=["Palkkalaji","Summa"])
-  heinä_palkka = pd.DataFrame(laske_palkka(heinä).items(),columns=["Palkkalaji","Summa"])
-  kesä_palkka.loc[kesä_palkka["Palkkalaji"] == "yhteensä", "Summa"] += saikku
-  kesä_palkka.loc[len(kesä_palkka)] ={
-   "Palkkalaji":"Sairaskorvaus",
-   "Summa":saikku
-  }
+  #kesä_palkka = pd.DataFrame(laske_palkka(june).items(),columns=["Palkkalaji","Summa"])
+  #heinä_palkka = #pd.DataFrame(laske_palkka(heinä).items(),columns=["Palkkalaji","Summa"])
+  #kesä_palkka.loc[kesä_palkka["Palkkalaji"] == "yhteensä", "Summa"] += saikku
+  #kesä_palkka.loc[len(kesä_palkka)] ={
+   ###}
 
-  yhteensä,Sairaskorvaus = kesä_palkka.iloc[5].copy(),kesä_palkka.iloc[6].copy()
+  #yhteensä,Sairaskorvaus = kesä_palkka.iloc[5].copy(),kesä_palkka.iloc[6].copy()
 
-  kesä_palkka.iloc[5],kesä_palkka.iloc[6] = Sairaskorvaus,yhteensä
+  #kesä_palkka.iloc[5],kesä_palkka.iloc[6] = Sairaskorvaus,yhteensä
 
 
 
-##TODO Arkipyhäkorvauksen lisääminen
-#TODO Vuosilomakorvaus lisääminen
-#TODO Siisti ohjelmaa. Luo kansioita tee koodista luettavampaa.
+##TODO Arkipyhäkorvauksen lisääminen (EHKÄ)
+#TODO Vuosilomakorvaus lisääminen (EHKÄ)
+#TODO Siisti ohjelmaa. Luo kansioita tee koodista luettavampaa. (Myöhemmin)
 #TODO prefect implementoiti

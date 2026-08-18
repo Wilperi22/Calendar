@@ -23,30 +23,74 @@ def init_db():
     #Creating the database
     with get_connection() as conn:
         with conn.cursor() as cursor:
-    
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS työntekijä(
+            henkilöid INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            etunimi TEXT NOT NULL,
+            sukunimi TEXT NOT NULL
+            )""")
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS työpaikat (
+                työid INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                nimi TEXT NOT NULL UNIQUE
+                )''')           
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS työt (
                 event_id TEXT NOT NULL PRIMARY KEY,
                 talku TIMESTAMPTZ NOT NULL,
                 tloppu TIMESTAMPTZ NOT NULL,
-                tnimi TEXT NOT NULL
+                tnimi TEXT NOT NULL,
+                henkilöid INT NOT NULL,
+                työid INT NOT NULL,
   
-                )
-                ''') 
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS työpaikat (nimi TEXT PRIMARY KEY)      
-            ''')
+                FOREIGN KEY (henkilöid)
+                    REFERENCES työntekijä(henkilöid),
+                FOREIGN KEY (työid)
+                    REFERENCES työpaikat(työid)
+                )''') 
+
 
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS palkat (
                 palkkaid INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                paivamaara TIMESTAMPTZ,
-                summa INT)
-            ''')
+                henkilöid INT NOT NULL,
+                vuosi INT NOT NULL,
+                kuukausi INT NOT NULL,
+                peruspalkka REAL NOT NULL,
+                iltalisä REAL NOT NULL,
+                lauantailisä REAL NOT NULL,
+                sunnuntailisä REAL NOT NULL,
+                vuosilomakorvaus REAL NOT NULL,
+                yhteensä REAL NOT NULL,
+                tunnit INT NOT NULL,
+                minuutit INT NOT NULL,
+        
+                FOREIGN KEY (henkilöid)
+                    REFERENCES työntekijä(henkilöid),
+                UNIQUE (henkilöid, vuosi, kuukausi)
+            )''')
             conn.commit()
 
-       
-
+ 
+def lisää_työntekijä(etunimi,sukunimi):
+    try:
+            with get_connection() as conn:
+                with conn.cursor() as cursor:
+                
+                    cursor.execute(
+                    """INSERT INTO työntekijä (
+                    etunimi,
+                    sukunimi
+                    )
+                    VALUES (%s,%s)
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (etunimi,sukunimi))
+            
+                conn.commit()
+    except psycopg.Error as e:
+            print(f"{e} error occured lisää työntekijä")
+    
 
 def lisää_työpäivä(id,alku,loppu,summary):
     try:
@@ -108,7 +152,26 @@ def hae_työpaikka(nimi):
     except (psycopg.Error,ValueError) as e:
         print(f"{e} ocurred hae_työpaikka")
 
-
+def lisää_palkka(henkilöid,vuosi,kuukausi,peruspalkka,iltalisä,lauantailisä,sunnuntailisä,vuosilomakorvaus,yhteensä,tunnit,minuutit):
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+            INSERT INTO palkat(
+                henkilöid,
+                vuosi,
+                kuukausi,
+                peruspalkka,
+                iltalisä,
+                lauantailisä,
+                sunnuntailisä,
+                vuosilomakorvaus,
+                yhteensä,
+                tunnit,
+                minuutit
+                )
+                VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT DO NOTHING
+                """,(henkilöid,vuosi,kuukausi,peruspalkka,iltalisä,lauantailisä,sunnuntailisä,vuosilomakorvaus,yhteensä,tunnit,minuutit))
 def hae_työt():
 
     with get_connection() as conn:

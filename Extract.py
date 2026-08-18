@@ -15,7 +15,7 @@ import data
 
 load_dotenv()
 # If modifying these scopes, delete the file token.json.
-SCOPES = ["https://www.googleapis.com/auth/calendar.events.readonly"]
+SCOPES = [os.getenv("SCOPES")]
 
 
 def raw_events():
@@ -64,15 +64,16 @@ def raw_events():
 
     #date_str = input("Start date (YYYY-MM-DD): ")
     #datetimes = datetime.strptime(date_str, "%Y-%m-%d").date().isoformat()
-    datetimes = datetime(year=2026,month=7,day=1,hour=0,minute=0,tzinfo=ZoneInfo("Europe/Helsinki")).isoformat()
-    
+    datetimes = datetime(year=2026,month=6,day=1,hour=0,minute=0,tzinfo=ZoneInfo("Europe/Helsinki")).isoformat()
+   
+
     events_result = ( 
         service.events()
         .list(
             timeMin=datetimes,
             calendarId=os.getenv("calendarId"),
             singleEvents=True,
-            orderBy="startTime",
+            orderBy="startTime"
         )
         .execute()
     )
