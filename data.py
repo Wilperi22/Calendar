@@ -33,16 +33,20 @@ def init_db():
                 CREATE TABLE IF NOT EXISTS työpaikat (
                 työid INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                 nimi TEXT NOT NULL UNIQUE
-                )''')           
+                )''')
+            
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS työt (
-                event_id TEXT NOT NULL PRIMARY KEY,
+                työvuoroid INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                event_id TEXT NOT NULL,
                 talku TIMESTAMPTZ NOT NULL,
                 tloppu TIMESTAMPTZ NOT NULL,
                 tnimi TEXT NOT NULL,
-                viikonpäivä TEXT,
-                ilta_h INT,
-                ilta_min INT,
+                viikonpäivä TEXT NOT NULL,
+                tunnit INT NOT NULL,
+                minuutit INT NOT NULL,
+                ilta_h INT NOT NULL,
+                ilta_min INT NOT NULL,
                 henkilöid INT NOT NULL,
                 työid INT NOT NULL,
                
@@ -50,7 +54,8 @@ def init_db():
                 FOREIGN KEY (henkilöid)
                     REFERENCES työntekijä(henkilöid),
                 FOREIGN KEY (työid)
-                    REFERENCES työpaikat(työid)
+                    REFERENCES työpaikat(työid),
+                UNIQUE (event_id)
                 )''') 
 
 
@@ -94,14 +99,13 @@ def lisää_työntekijä(etunimi,sukunimi):
             
                 conn.commit()
     except psycopg.Error as e:
-            print(f"{e} error occured lisää työntekijä")
-    
+            print(f"{e} error occured lisää työntekijä") 
 
-def lisää_työpäivä(id,alku,loppu,summary):
+def lisää_työpäivä(id,alku,loppu,nimi,viikonpäivä,tunnit,minuutit,ilta_tunnit,ilta_minuutit,henkilöid,työid):
     try:
         with get_connection() as conn:
             with conn.cursor() as cursor:
-            
+                
                 cursor.execute(
                 """INSERT INTO työt (
                 event_id,
@@ -109,19 +113,22 @@ def lisää_työpäivä(id,alku,loppu,summary):
                 tloppu,
                 tnimi,
                 viikonpäivä,
+                tunnit,
+                minuutit,
                 ilta_h,
-                ilta_min
+                ilta_min,
+                henkilöid,
+                työid
                 )
-                VALUES (%s,%s,%s,%s,%s,%s,%s)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 ON CONFLICT (event_id) DO NOTHING
                 """,
-                (id,alku,loppu,summary))
+                (id,alku,loppu,nimi,viikonpäivä,tunnit,minuutit,ilta_tunnit,ilta_minuutit,henkilöid,työid))
         
             conn.commit()
     except psycopg.Error as e:
         print(f"{e} error occured lisää työpäivä")
-
-
+        return
 
 def lisää_työpaikka(nimi):
     try:
@@ -140,7 +147,20 @@ def lisää_työpaikka(nimi):
     except psycopg.Error as e:
         print(f"{e} ocurred lisää_työpaikka")
 
-
+def hae_työid(nimi):
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT työid
+                    FROM työpaikat
+                    WHERE nimi = %s
+                    """,(nimi,))
+                answer = cursor.fetchone()
+                return answer[0]
+    except (psycopg.Error,ValueError,TypeError) as e:
+        print(f"error finding työid {e}")
+        
 def hae_työpaikka(nimi):
     try:
         with get_connection() as conn:

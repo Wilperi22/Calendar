@@ -14,19 +14,18 @@ YÖ_LISÄ = 0.3#22-07
 ILTA_LISÄ = 0.15 #18-22
 
 def testi(df):
-  print(pyhät())
+  
   print("Seuraavaksi df")
-  print(df,"Tässä testi df")
+  print(df["start"].head(),"Tässä testi df")
   print("df jälkeen")
   toukokuu = df[(df["start"] >= "2026-03-1")&
               (df["end"] <("2026-04-1"))]
-  print("Ennen toukokuuta")
-  print(toukokuu)
-  print("Toukokuun jälkeen")
-  toukokuu_palkka = pd.DataFrame(laske_palkka(toukokuu).items(),columns=["Palkkalaji","Summa"])
-  print(toukokuu_palkka)
+  
+  for row in df.itertuples():
+    vuosi = row.start
 
-def kuukaudet(df):
+
+def kuukausi_palkanlasku(df):
   
   df = df.copy()
   df["kuukausi"] = df["start"].dt.to_period("M")
@@ -93,17 +92,19 @@ def poista_toteutumaton(df,alku:date,loppu:date):
 
   return toteutumaton
 
-def pyhät():
-  dr = pd.date_range(start="2026-01-01", end="2026-12-31")
+#TODO Pyhät vaatii vuoden josta tarkistaa pyhäpäivät.
+def pyhät(vuosi):
+  dr = pd.date_range(start=f"{vuosi}-01-01", end=f"{vuosi}-12-31")
   
 # 1. Fetch holidays
-  fi_holidays = holidays.country_holidays("FI", years=2026)
+  fi_holidays = holidays.country_holidays("FI", years=vuosi)
   pyhät_set = set(fi_holidays.keys())
   return pyhät_set
 
 
 def laske_palkka(df):
-  pyhä_pvm = pyhät()
+  
+  
   peruspalkka = 0
   iltalisä = 0
   sunnuntailisä = 0
@@ -113,6 +114,14 @@ def laske_palkka(df):
   vuosilomakorvaus = 0
   #print(df)
   for row in df.itertuples():
+    vuosi = row.start
+
+
+
+
+      
+    vuosi = vuosi.tz_convert('Europe/Helsinki')
+    pyhä_pvm = pyhät(vuosi.year)
     päivämäärä = row.start
     minuutit = row.minuutit + (row.tunnit*60)
     ilta_minuutit = row.ilta_min + (row.ilta_h*60)
@@ -152,7 +161,7 @@ def laske_palkka(df):
     "Minuutit":määrä%60
   }
 
-def Transforming(df):
+def Data_clean(df):
   
   columns_remove =['kind', 'etag', 'status', 'htmlLink', 'created', 'updated', 'creator', 'organizer',  'iCalUID',
        'sequence', 'reminders', 'eventType', 'description', 'transparency',
@@ -162,7 +171,7 @@ def Transforming(df):
   #if 'eventLabelId' in df.columns():
     #df = df.drop('eventLabelId',axis=1,errors='ignore')
   df = df.drop(columns_remove,axis=1,errors='ignore')
-
+  
   df = df[df["summary"].str.len()<=3]
   
   df["start"] = df["start"].str["dateTime"]
@@ -199,7 +208,7 @@ def Transforming(df):
     ## #df2.iloc["kuukausi"] = kuukausi
    # df2.loc[len(df2)] = palkka
  # df2["kuukausi"] = testi
-  print("Transform loppu")
+  
   return df
 
 

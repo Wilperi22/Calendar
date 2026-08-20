@@ -18,7 +18,7 @@ load_dotenv()
 SCOPES = [os.getenv("SCOPES")]
 
 
-def raw_events():
+def raw_events(vuosi,kuukausi):
   values =set()
   weekdays = {
     0:"Monday",
@@ -64,7 +64,7 @@ def raw_events():
 
     #date_str = input("Start date (YYYY-MM-DD): ")
     #datetimes = datetime.strptime(date_str, "%Y-%m-%d").date().isoformat()
-    datetimes = datetime(year=2025,month=6,day=1,hour=0,minute=0,tzinfo=ZoneInfo("Europe/Helsinki")).isoformat()
+    datetimes = datetime(year=vuosi,month= kuukausi,day=1,hour=0,minute=0,tzinfo=ZoneInfo("Europe/Helsinki")).isoformat()
    
 
     events_result = ( 
@@ -84,26 +84,6 @@ def raw_events():
       return
 
     return events
-    
-    for event in events:
-      #print(event["summary"])
-      start = event["start"].get("dateTime", event["start"].get("date"))
-      end = event["end"].get("dateTime", event["end"].get("date"))
-      event_id = event.get("id")
-      summary = event["summary"]
-      
-      dt_start = datetime.fromisoformat(start)
-      dt_end = datetime.fromisoformat(end)
-      
-      päivä[dt_start.strftime("%Y-%m-%d %H:%M:%S")] = dt_end.strftime("%Y-%m-%d %H:%M:%S") #Tekee dict missä on "Päivän alku":"Päivän loppu" esim "2026-07-09 08:30:00:2026-07-09 17:00:00"
-
-      if len(summary) == 3:
-        data.lisää_työpaikka(summary)
-
-      if data.hae_työpaikka(summary) == True:
-        data.lisää_työpäivä(event_id,dt_start,dt_end,summary)
-      
-
-  except HttpError as error:
+  
+  except (HttpError,ValueError) as error:
     print(f"An error occurred: {error}")
-#raw_events()

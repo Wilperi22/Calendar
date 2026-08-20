@@ -1,12 +1,19 @@
-import datetime
-import holidays
 import pandas as pd
+import data
+import Extract
+import Transform
+#import Load
+import datetime
+from datetime import date
 
-dr = pd.date_range(start="2026-01-01", end="2026-12-31")
-df = pd.DataFrame({"date": dr})
-päivä = datetime.datetime.fromisoformat("2026-12-24 08:00:00+02:00")
-# 1. Fetch holidays
-fi_holidays = holidays.country_holidays("FI", years=2026)
-kasa = set(fi_holidays.keys())
-if päivä.date() in kasa:
-    print(kasa)
+def main():
+    events = Extract.raw_events()
+    df = pd.DataFrame(events)
+
+    työt = Transform.Data_clean(df)
+    print(Transform.testi(työt))
+
+    #Load.lisää_palkka(palkat)
+
+if __name__ == "__main__":
+    main()
