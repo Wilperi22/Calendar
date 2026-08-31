@@ -51,19 +51,13 @@ def raw_events(vuosi,kuukausi):
       token.write(creds.to_json())
 
   try:
-    #print("Creds",creds)
-    #print("Valid",creds.valid)
-    #print("Expired",creds.expired)
-    #print("Refresh",creds.refresh_token is not None)
-    #print("Scopes:", creds.scopes)
 
     service = build("calendar", "v3", credentials=creds)
 
     # Call the Calendar API
   
 
-    #date_str = input("Start date (YYYY-MM-DD): ")
-    #datetimes = datetime.strptime(date_str, "%Y-%m-%d").date().isoformat()
+  
     datetimes = datetime(year=vuosi,month= kuukausi,day=1,hour=0,minute=0,tzinfo=ZoneInfo("Europe/Helsinki")).isoformat()
    
 
@@ -78,7 +72,6 @@ def raw_events(vuosi,kuukausi):
         .execute()
     )
     events = events_result.get("items", [])
-    #(events)
     if not events:
       print("No upcoming events found.")
       return

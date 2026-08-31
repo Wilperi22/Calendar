@@ -1,12 +1,11 @@
 
 import holidays
-from datetime import datetime,date,time,timedelta
+from datetime import datetime,date,time,timedelta,timezone
 import pandas as pd
-import Extract
-import data
-from datetime import datetime,date,time,timedelta
-import os.path
+
+
 from zoneinfo import ZoneInfo
+
 PALKKA_MIN =  14.82/60
 LAUANTAI_LISÄ = 0.25
 SUNNUNTAI_LISÄ = 1
@@ -14,23 +13,20 @@ YÖ_LISÄ = 0.3#22-07
 ILTA_LISÄ = 0.15 #18-22
 
 def testi(df):
+  pass
   
-  print("Seuraavaksi df")
-  print(df["start"].head(),"Tässä testi df")
-  print("df jälkeen")
-  toukokuu = df[(df["start"] >= "2026-03-1")&
-              (df["end"] <("2026-04-1"))]
   
-  for row in df.itertuples():
-    vuosi = row.start
 
 
 def kuukausi_palkanlasku(df):
   
   df = df.copy()
-  df["kuukausi"] = df["start"].dt.to_period("M")
+  
+  #.dt.tz_localize(None) lisätty jotta poistaa virheen  UserWarning: Converting to PeriodArray/Index representation will drop timezone information.
+  df["kuukausi"] = df["start"].dt.tz_localize(None).dt.to_period("M") 
   df2 = pd.DataFrame()
- 
+  henkilöid = df["Työntekijäid"].iloc[0]
+  #Antaa jokaisen tasakuukauden työt data framena esim 2026-01-01 -> 2026-01-31
   for kuukausi,kuukausidf in df.groupby("kuukausi"):
     
     palkka = laske_palkka(kuukausidf)
@@ -38,8 +34,12 @@ def kuukausi_palkanlasku(df):
       df2 = pd.DataFrame(laske_palkka(kuukausidf),index=[kuukausi])
       continue
     
+    
+    #Tekee kuukaudesta indexin jota seuraa palkka
     df2.loc[kuukausi] = palkka
-  
+  df2["Työntekijäid"] = int(henkilöid)
+  df2["Vuosi"] = df2.index.year
+  df2["Kuukausi"] = df2.index.month
   return df2
 
 def hrs_min(td):
@@ -55,7 +55,7 @@ def viikonpäivä(dt):
     weekdays = {
     0:"Monday",
     1:"Tuesday",
-    2:"Wensday",
+    2:"Wednesday",
     3:"Thursday",
     4:"Friday",
     5:"Saturday",
@@ -112,7 +112,7 @@ def laske_palkka(df):
   määrä = 0
   arkipyhäkorvaus = 0
   vuosilomakorvaus = 0
-  #print(df)
+ 
   for row in df.itertuples():
     vuosi = row.start
 
@@ -161,15 +161,12 @@ def laske_palkka(df):
     "Minuutit":määrä%60
   }
 
-def Data_clean(df):
-  
+def Data_clean(df,id):
+
   columns_remove =['kind', 'etag', 'status', 'htmlLink', 'created', 'updated', 'creator', 'organizer',  'iCalUID',
        'sequence', 'reminders', 'eventType', 'description', 'transparency',
        'location','colorId','eventLabelId']
-  #if 'colorId' in df.columns():
-    #df = df.drop('colorId',axis=1)
-  #if 'eventLabelId' in df.columns():
-    #df = df.drop('eventLabelId',axis=1,errors='ignore')
+  df["Työntekijäid"] = id
   df = df.drop(columns_remove,axis=1,errors='ignore')
   
   df = df[df["summary"].str.len()<=3]
@@ -196,18 +193,7 @@ def Data_clean(df):
   ilta_kesto = (df["end"] - ilta_alku).clip(lower=pd.Timedelta(0))
 
   df["ilta_h"], df["ilta_min"] = hrs_min(ilta_kesto)
-  #test_start = df["start"].iloc[0]
-  #df["kuukausi"] = df["start"].dt.to_period("M")
-  #df2 = pd.DataFrame()
-  #testi = []
-  #for kuukausi,kuukausidf in df.groupby("kuukausi"):
-   # testi.append(kuukausi)
-   # palkka = laske_palkka(kuukausidf)
-   # if df2.empty:
-   #   df2 = pd.DataFrame(laske_palkka(kuukausidf),index=[0])
-    ## #df2.iloc["kuukausi"] = kuukausi
-   # df2.loc[len(df2)] = palkka
- # df2["kuukausi"] = testi
+
   
   return df
 

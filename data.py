@@ -81,7 +81,20 @@ def init_db():
             )''')
             conn.commit()
 
- 
+def hae_työntekijät():
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            try:
+                cursor.execute("""
+                    SELECT *
+                    FROM työntekijä
+                    ORDER BY sukunimi,etunimi
+                    """)
+                tiedot = cursor.fetchall()
+                return tiedot
+            except psycopg.errors as e:
+                print(f"työntekijä tietoja ei saatu haettua sillä {e}")
+            
 def lisää_työntekijä(etunimi,sukunimi):
     try:
             with get_connection() as conn:
@@ -213,4 +226,3 @@ def hae_työt():
             data = cursor.fetchall()
         
         return data
-
