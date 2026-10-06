@@ -5,15 +5,19 @@ import Transform
 import Load
 import datetime
 from datetime import date
-
+import palkanlasku
 def main():
-
-    events = Extract.raw_events(2026,1)
+    data.init_db()
+    events = Extract.raw_events(2026,6)
     df = pd.DataFrame(events)
-    työt = Transform.Data_clean(df,1)
-    Load.lataa_työt2(työt,data.get_connection())
-    palkat = Transform.kuukausi_palkanlasku(työt)
-    Load.lataa_palkka2(palkat,data.get_connection())
-    
+    työt = Transform.Transform(df,1)
+
+    Load.lataa_työt(työt,data.get_connection())
+    palkat = palkanlasku.kuukausi_palkanlasku(työt)
+    Load.lataa_palkka(palkat,data.get_connection())
+
+
+
+
 if __name__ == "__main__":
     main()

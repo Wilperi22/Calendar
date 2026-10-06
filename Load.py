@@ -9,69 +9,40 @@ from dotenv import load_dotenv
 def lisää_työntekijä(etunimi,sukunimi):
     data.lisää_työntekijä(etunimi,sukunimi)
 
-def lisää_palkka(df):
-    #TODO Henkilöid implementointi.
 
-  
-    for row in df.itertuples():
-        
-        henkilöid = row.Työntekijäid
-        peruspalkka= row.Peruspalkka
-        iltalisä =row.Iltalisä
-        lauantailisä =row.Lauantailisä
-        sunnuntailisä =row.Sunnuntailisä
-        arkippyhäkorvaus =row.Arkipyhäkorvuas
-        Vuosilomakorvaus = row.Vuosilomakorvaus
-        yhteensä =row.Yhteensä
-        tunnit=row.Tunnit
-        minuutit=row.Minuutit
-        vuosi= row.Vuosi
-        kuukausi= row.Kuukausi
+def lataa_työt(df,conn):
+    print("LAtaa Työt")
 
-        data.lisää_palkka(henkilöid,vuosi,kuukausi,peruspalkka,iltalisä,lauantailisä,sunnuntailisä,arkippyhäkorvaus,Vuosilomakorvaus,yhteensä,tunnit,minuutit)
-
-def lisää_työt(df):
-    #TODO työid haku työpaikat DB, henkilöid laitto
-    for row in df.itertuples():
-        nimi = (row.summary)
-        if data.hae_työpaikka(nimi) == False:
-            data.lisää_työpaikka(nimi)
-        id = (row.id)
-        alku = (row.start)
-        loppu = (row.end)
-        viikonpäivä = (row.weekday)
-        tunnit = (row.tunnit)
-        minuutit = (row.minuutit)
-        ilta_tunnit = (row.ilta_h)
-        ilta_minuutit = (row.ilta_min)
-        henkilöid = (row.Työntekijäid)
-        työid = data.hae_työid(nimi)
-
-        data.lisää_työpäivä(id,alku,loppu,nimi,viikonpäivä,tunnit,minuutit,ilta_tunnit,ilta_minuutit,henkilöid,työid)
-
-
-
-
-def lataa_työt2(df,conn):
     with conn.cursor() as cursor:
 
         for row in df.itertuples():
+            print(row)
             nimi = (row.summary)
             cursor.execute("""
             SELECT työid
             FROM työpaikat
-            WHERE nimi = %s""",(nimi,))
-            työid = cursor.fetchone()[0]
-            cursor.execute("""
-                INSERT INTO työpaikat(
-                nimi)
-                VALUES (%s)
-                ON CONFLICT (nimi)
-                DO UPDATE SET nimi = EXCLUDED.nimi
-                RETURNING työid""",(nimi,))
-            työid = cursor.fetchone()[0]
+            WHERE nimi = %s
+            """,(nimi,))
 
-            print(työid)
+            työid = cursor.fetchone()
+            if työid:
+                työid = työid[0]
+                print(työid)
+
+            else:
+                print(row)
+                cursor.execute("""
+                    INSERT INTO työpaikat(
+                    nimi)
+                    VALUES (%s)
+                    ON CONFLICT (nimi)
+                    DO UPDATE SET nimi = EXCLUDED.nimi
+                    RETURNING työid""",(nimi,))
+
+                työid = cursor.fetchone()[0]
+                print(nimi)
+                print(työid)
+            
 
             cursor.execute("""
             INSERT INTO työt(
@@ -103,9 +74,9 @@ def lataa_työt2(df,conn):
                 työid                
             )
             )
-  
+            conn.commit()  
 
-def lataa_palkka2(df,conn):
+def lataa_palkka(df,conn):
     with conn.cursor() as cursor:
         for row in df.itertuples():
             
@@ -125,7 +96,18 @@ def lataa_palkka2(df,conn):
             minuutit
             )
             VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-            ON CONFLICT (henkilöid,vuosi,kuukausi) DO NOTHING
+            ON CONFLICT (henkilöid,vuosi,kuukausi) 
+            DO UPDATE SET
+            peruspalkka = EXCLUDED.peruspalkka,
+            iltalisä = EXCLUDED.iltalisä,
+            lauantailisä = EXCLUDED.lauantailisä,
+            sunnuntailisä = EXCLUDED.sunnuntailisä,
+            arkipyhäkorvaus = EXCLUDED.arkipyhäkorvaus,
+            vuosilomakorvaus = EXCLUDED.vuosilomakorvaus,
+            yhteensä = EXCLUDED.yhteensä,
+            tunnit = EXCLUDED.tunnit,
+            minuutit = EXCLUDED.minuutit
+            WHERE EXCLUDED.yhteensä > palkat.yhteensä;
             
         """,(
             row.Työntekijäid,
@@ -142,4 +124,4 @@ def lataa_palkka2(df,conn):
             row.Minuutit,
   
         ),)
-        
+        conn.commit()        

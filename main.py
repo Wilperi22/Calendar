@@ -3,8 +3,7 @@ import data
 import Extract
 import Transform
 import Load
-import datetime
-from datetime import date
+import palkanlasku
     
 def main():
     data.init_db()
@@ -18,7 +17,7 @@ def main():
    
             valinta = int(input("Valitse työntekijä: "))
 
-            if valinta<1 or valinta>len(työntekijä):
+            if valinta < 1 or valinta > len(työntekijät):
                 raise ValueError("Työntekijä valinta virheellinen")
                 
             valittu = työntekijät[valinta - 1]
@@ -27,9 +26,10 @@ def main():
             
             vuosi = int(input("Anna aloitusvuosi(yyyy):"))
             kuukausi = int(input("Anna aloituskuukausi(mm):"))
-            print(vuosi,kuukausi)
-            if vuosi == None or kuukausi == None:
-                raise ValueError
+            
+            if kuukausi < 1 or kuukausi > 12:
+                raise ValueError("Kuukausi pitää olla välillä 1-12")
+            
         except (ValueError,IndexError) as e:
             print(f"Virhe inputeissa {e}")
             continue
@@ -47,19 +47,32 @@ def main():
     df = pd.DataFrame(events)
     
     print("Tiedot saatu seuraavaksi siistiminen")
-    työt = Transform.Data_clean(df,henkilöid)
+    työt = Transform.Transform(df,henkilöid)
     
     print("siistiminen onnistui")
+
+    if työt.empty:
+        print("Valitulta ajalta ei löytynyt palkkalaskentaan sopivia työvuoroja.")
+        return
     
-    print(f"ensimmäinen työpäivä: {työt["start"].min().replace(tzinfo=None)} - {työt["end"].min().replace(tzinfo=None)},viimeisin työpäivä: {työt["start"].max().replace(tzinfo=None)} - {työt["end"].max().replace(tzinfo=None)}")
+    print(
+        f'ensimmäinen työpäivä: '
+        f'{työt["start"].min().replace(tzinfo=None)} - '
+        f'{työt["end"].min().replace(tzinfo=None)}, '
+        f'viimeisin työpäivä: '
+        f'{työt["start"].max().replace(tzinfo=None)} - '
+        f'{työt["end"].max().replace(tzinfo=None)}'
+    )
    
 
-    palkat = Transform.kuukausi_palkanlasku(työt)
+    palkat = palkanlasku.kuukausi_palkanlasku(työt)
     
     print(f" Palkat laskettu aikaväliltä {palkat.index.min()},{palkat.index.max()}")
     
     
-    Load.lisää_palkka(palkat)
+    with data.get_connection() as conn:
+        Load.lataa_työt(työt, conn)
+        Load.lataa_palkka(palkat, conn)
     
 
 if __name__ == "__main__":
