@@ -4,4 +4,6 @@ token.json
 calendar.db
 events.txt
 TODO.md
+__pycache__/
+testi.py
  
