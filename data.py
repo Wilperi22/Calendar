@@ -216,6 +216,8 @@ def lisää_palkka(henkilöid,vuosi,kuukausi,peruspalkka,iltalisä,lauantailisä
                 """,(henkilöid,vuosi,kuukausi,peruspalkka,iltalisä,lauantailisä,sunnuntailisä,arkipyhäkorvaus,vuosilomakorvaus,yhteensä,tunnit,minuutit))
 def hae_työt():
 
+
+
     with get_connection() as conn:
         with conn.cursor() as cursor:
         
@@ -226,3 +228,31 @@ def hae_työt():
             data = cursor.fetchall()
         
         return data
+
+def hae_työtunnit_työntekijöittäin(vuosi: int, kuukausi: int):
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+            SELECT
+            ty.etunimi,
+            ty.sukunimi,
+            SUM(t.tunnit) AS Tunnit,
+            SUM(t.minuutit) AS Minuutit
+            FROM työntekijä ty
+            JOIN työt t 
+                ON t.henkilöid = ty.henkilöid
+            WHERE EXTRACT (YEAR FROM t.talku) = %s
+            AND EXTRACT (MONTH FROM t.talku) = %s 
+            GROUP BY ty.henkilöid,ty.etunimi,ty.sukunimi
+            """,(vuosi,kuukausi))
+            return cursor.fetchall()
+
+
+def hae_palkat(vuosi: int):
+    pass
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+            SELECT
+
+            """)
