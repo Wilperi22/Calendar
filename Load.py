@@ -11,12 +11,12 @@ def lisää_työntekijä(etunimi,sukunimi):
 
 
 def lataa_työt(df,conn):
-    print("LAtaa Työt")
+  
 
     with conn.cursor() as cursor:
 
         for row in df.itertuples():
-            print(row)
+          
             nimi = (row.summary)
             cursor.execute("""
             SELECT työid
@@ -27,10 +27,9 @@ def lataa_työt(df,conn):
             työid = cursor.fetchone()
             if työid:
                 työid = työid[0]
-                print(työid)
-
+            
             else:
-                print(row)
+               
                 cursor.execute("""
                     INSERT INTO työpaikat(
                     nimi)
@@ -40,9 +39,7 @@ def lataa_työt(df,conn):
                     RETURNING työid""",(nimi,))
 
                 työid = cursor.fetchone()[0]
-                print(nimi)
-                print(työid)
-            
+   
 
             cursor.execute("""
             INSERT INTO työt(

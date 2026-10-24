@@ -104,15 +104,11 @@ def Remove_Unnecessary(df,id):
   return df
 
 def Transform(df,id):
-  print(df,"Transform")
+  
   df = Remove_Unnecessary(df,id)
-  print(df)
-  print("__________________________")
+  
   df = Convert_DateTime(df)
-  print("_________________________")
-  print(df)
-  print("__________________________")
+ 
   df = eavning_pay(df)
-  print("_____________________")
-  print(df)
+
   return df

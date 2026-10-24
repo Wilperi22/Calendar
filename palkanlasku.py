@@ -5,15 +5,14 @@ import pandas as pd
 PALKKA_MIN =  14.82/60
 LAUANTAI_LISÄ = 0.25
 SUNNUNTAI_LISÄ = 1
-YÖ_LISÄ = 0.3#22-07
+YÖ_LISÄ = 0.3 #22-07
 ILTA_LISÄ = 0.15 #18-22
 from zoneinfo import ZoneInfo
 
 def pyhät(vuosi):
-  dr = pd.date_range(start=f"{vuosi}-01-01", end=f"{vuosi}-12-31")
-  
-
-  fi_holidays = holidays.country_holidays("FI", years=vuosi)
+ # dr = pd.date_range(start=f"{vuosi}-01-01", end=f"{vuosi}-12-31")
+  fi_holidays = holidays.country_holidays("FI", years=vuosi) #Tekee dict jossa esim 'datetime.date(2026, 12, 25): 'Christmas Day'...}'
+  print(fi_holidays,"Tässä fi_holidays")
   pyhät_set = set(fi_holidays.keys())
   return pyhät_set
 
@@ -25,17 +24,17 @@ def kuukausi_palkanlasku(df):
   df["kuukausi"] = df["start"].dt.tz_localize(None).dt.to_period("M") 
   df2 = pd.DataFrame()
   henkilöid = df["Työntekijäid"].iloc[0]
-  #Antaa jokaisen tasakuukauden työt data framena esim 2026-01-01 -> 2026-01-31
-  for kuukausi,kuukausidf in df.groupby("kuukausi"):
+  ##Kuukausi kertoo mistä kuukaudesta kyse ja kuukausi df pitää sisällään työvuorot kyseiseltä kuukaudelta.
+  for kuukausi,kuukausidf in df.groupby("kuukausi"):  #Antaa jokaisen tasakuukauden työt dataframe:na esim työvuorot ajalta: 2026-01-01 -> 2026-01-31
     
-    palkka = laske_palkka(kuukausidf)
+    palkka = laske_palkka(kuukausidf) #Palauttaa dict jossa {'peruspalkka':x,'Iltalisä':y...} 
+
     if df2.empty:
-      df2 = pd.DataFrame(laske_palkka(kuukausidf),index=[kuukausi])
+      df2 = pd.DataFrame(palkka,index=[kuukausi]) #Laittaa df2 ensimäisen datan ja sen mukana columns.
       continue
-    
-    
-    #Tekee kuukaudesta indexin jota seuraa palkka
-    df2.loc[kuukausi] = palkka
+
+    df2.loc[kuukausi] = palkka  #Tekee kuukaudesta indexin jota seuraa palkka
+    print(df2,"tässä df2")
   df2["Työntekijäid"] = int(henkilöid)
   df2["Vuosi"] = df2.index.year
   df2["Kuukausi"] = df2.index.month
@@ -53,27 +52,25 @@ def laske_palkka(df):
   vuosilomakorvaus = 0
  
   for row in df.itertuples():
-    vuosi = row.start
-
-
-
-
-      
-    vuosi = vuosi.tz_convert('Europe/Helsinki')
-    pyhä_pvm = pyhät(vuosi.year)
     päivämäärä = row.start
+    vuosi = päivämäärä.tz_convert('Europe/Helsinki')
+    pyhä_pvm = pyhät(vuosi.year)
+    #Minuutit pitää sisällään myös ilta minuutit
     minuutit = row.minuutit + (row.tunnit*60)
+    #Laksee iltatyönä tehdyt minuutit erikseen.
     ilta_minuutit = row.ilta_min + (row.ilta_h*60)
     määrä += minuutit
-    
+    #Tarkistetaan onko pyhä
     if päivämäärä.date() in pyhä_pvm:
       arkipyhäkorvaus += minuutit * PALKKA_MIN * SUNNUNTAI_LISÄ
+      #Tarkistetaan onko lauantai
     elif row.weekday == "Saturday":
       lauantailisä += minuutit * PALKKA_MIN * LAUANTAI_LISÄ
-
+    #Tarkistetaan onko Sunnuntai
     elif row.weekday == "Sunday":
       sunnuntailisä += minuutit * PALKKA_MIN * SUNNUNTAI_LISÄ
-    
+
+    #Iltalisän lasku. 
     iltalisä += ilta_minuutit * PALKKA_MIN * ILTA_LISÄ
     
     peruspalkka += minuutit * PALKKA_MIN

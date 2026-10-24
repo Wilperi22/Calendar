@@ -254,5 +254,11 @@ def hae_palkat(vuosi: int):
         with conn.cursor() as cursor:
             cursor.execute("""
             SELECT
+            t.etunimi,
+            t.sukunimi,
+            p.yhteensä
+            FROM työntekijä t
+            JOIN palkat p ON t.henkilöid = p.henkilöid
+            
 
             """)
