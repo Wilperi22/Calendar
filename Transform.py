@@ -106,9 +106,15 @@ def Remove_Unnecessary(df,id):
 def Transform(df,id):
   
   df = Remove_Unnecessary(df,id)
+<<<<<<< HEAD
   
   df = Convert_DateTime(df)
  
+=======
+
+  df = Convert_DateTime(df)
+  
+>>>>>>> 18b3eb2 (Cleaning)
   df = eavning_pay(df)
 
   return df

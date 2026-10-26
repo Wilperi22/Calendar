@@ -63,8 +63,8 @@ def init_db():
             CREATE TABLE IF NOT EXISTS palkat (
                 palkkaid INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                 henkilöid INT NOT NULL,
-                vuosi INT NOT NULL,
-                kuukausi INT NOT NULL,
+                tapahtuma_vuosi INT NOT NULL,
+                tapahtuma_kuukausi INT NOT NULL,
                 peruspalkka REAL NOT NULL,
                 iltalisä REAL NOT NULL,
                 lauantailisä REAL NOT NULL,
@@ -199,8 +199,8 @@ def lisää_palkka(henkilöid,vuosi,kuukausi,peruspalkka,iltalisä,lauantailisä
             cursor.execute("""
             INSERT INTO palkat(
                 henkilöid,
-                vuosi,
-                kuukausi,
+                tapahtuma_vuosi,
+                tapahtuma_kuukausi,
                 peruspalkka,
                 iltalisä,
                 lauantailisä,
@@ -262,3 +262,11 @@ def hae_palkat(vuosi: int):
             
 
             """)
+def monthly_statistics(vuosi: int, kuukausi: int):
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            pass
+            cursor.execute("""
+            SELECT
+            """,(vuosi,kuukausi))
+            return cursor.fetchall()

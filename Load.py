@@ -11,12 +11,19 @@ def lisää_työntekijä(etunimi,sukunimi):
 
 
 def lataa_työt(df,conn):
+<<<<<<< HEAD
   
+=======
+    
+>>>>>>> 18b3eb2 (Cleaning)
 
     with conn.cursor() as cursor:
 
         for row in df.itertuples():
+<<<<<<< HEAD
           
+=======
+>>>>>>> 18b3eb2 (Cleaning)
             nimi = (row.summary)
             cursor.execute("""
             SELECT työid
@@ -27,9 +34,15 @@ def lataa_työt(df,conn):
             työid = cursor.fetchone()
             if työid:
                 työid = työid[0]
+<<<<<<< HEAD
             
             else:
                
+=======
+                
+
+            else:
+>>>>>>> 18b3eb2 (Cleaning)
                 cursor.execute("""
                     INSERT INTO työpaikat(
                     nimi)
@@ -39,7 +52,12 @@ def lataa_työt(df,conn):
                     RETURNING työid""",(nimi,))
 
                 työid = cursor.fetchone()[0]
+<<<<<<< HEAD
    
+=======
+              
+            
+>>>>>>> 18b3eb2 (Cleaning)
 
             cursor.execute("""
             INSERT INTO työt(
@@ -80,8 +98,8 @@ def lataa_palkka(df,conn):
             cursor.execute("""
             INSERT INTO palkat(
             henkilöid,
-            vuosi,
-            kuukausi,
+            tapahtuma_vuosi,
+            tapahtuma_kuukausi,
             peruspalkka,
             iltalisä,
             lauantailisä,
@@ -93,7 +111,7 @@ def lataa_palkka(df,conn):
             minuutit
             )
             VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-            ON CONFLICT (henkilöid,vuosi,kuukausi) 
+            ON CONFLICT (henkilöid,tapahtuma_vuosi,tapahtuma_kuukausi) 
             DO UPDATE SET
             peruspalkka = EXCLUDED.peruspalkka,
             iltalisä = EXCLUDED.iltalisä,

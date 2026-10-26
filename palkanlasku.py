@@ -2,7 +2,7 @@
 import holidays
 from datetime import datetime,date,time,timedelta,timezone
 import pandas as pd
-PALKKA_MIN =  14.82/60
+PALKKA_MIN =  15.29/60
 LAUANTAI_LISÄ = 0.25
 SUNNUNTAI_LISÄ = 1
 YÖ_LISÄ = 0.3 #22-07
@@ -19,11 +19,12 @@ def pyhät(vuosi):
 def kuukausi_palkanlasku(df):
   
   df = df.copy()
-  
+  print(df,"pellkkä df")
   #.dt.tz_localize(None) lisätty jotta poistaa virheen  UserWarning: Converting to PeriodArray/Index representation will drop timezone information.
   df["kuukausi"] = df["start"].dt.tz_localize(None).dt.to_period("M") 
   df2 = pd.DataFrame()
   henkilöid = df["Työntekijäid"].iloc[0]
+<<<<<<< HEAD
   ##Kuukausi kertoo mistä kuukaudesta kyse ja kuukausi df pitää sisällään työvuorot kyseiseltä kuukaudelta.
   for kuukausi,kuukausidf in df.groupby("kuukausi"):  #Antaa jokaisen tasakuukauden työt dataframe:na esim työvuorot ajalta: 2026-01-01 -> 2026-01-31
     
@@ -35,9 +36,23 @@ def kuukausi_palkanlasku(df):
 
     df2.loc[kuukausi] = palkka  #Tekee kuukaudesta indexin jota seuraa palkka
     print(df2,"tässä df2")
+=======
+  #Antaa jokaisen tasakuukauden työt data framena esim 2026-01-01 -> 2026-01-31
+  for kuukausi,kuukausidf in df.groupby("kuukausi"):
+    palkka = laske_palkka(kuukausidf)
+    if df2.empty:
+      df2 = pd.DataFrame(laske_palkka(kuukausidf),index=[kuukausi])
+      print(df2,"Tässä df2")
+      continue
+    
+    
+    
+    df2.loc[kuukausi] = palkka ###Lisää kuukauden df2:seen uutena rivinä
+>>>>>>> 18b3eb2 (Cleaning)
   df2["Työntekijäid"] = int(henkilöid)
   df2["Vuosi"] = df2.index.year
   df2["Kuukausi"] = df2.index.month
+  print(df2,"Tässä df2 ennen returnia")
   return df2
 
 def laske_palkka(df):
